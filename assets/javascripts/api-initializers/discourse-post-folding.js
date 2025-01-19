@@ -1,9 +1,7 @@
 import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { apiInitializer } from "discourse/lib/api";
-// import I18n from "I18n";
-
-// const pluginId = "discourse-post-folding";
+import PostMenuFoldingButton from "../discourse/components/post-menu-folding-button";
 
 export default apiInitializer("1.16.0", (api) => {
   // api.modifyClass(
@@ -46,12 +44,12 @@ export default apiInitializer("1.16.0", (api) => {
     }
   });
 
-  function makeButton(attrs) {
+  function shoudRenderPostFoldingButton(post) {
     const currentUser = api.getCurrentUser();
 
     let canFold = false;
 
-    if (attrs.post_number === 1) {
+    if (post.post_number === 1) {
       return;
     }
     if (currentUser == null) {
@@ -60,10 +58,14 @@ export default apiInitializer("1.16.0", (api) => {
 
     canFold ||= currentUser?.can_fold_post;
     canFold ||=
-      attrs.topic?.topic_op_admin_status?.can_fold_posts &&
-      currentUser.id === attrs.topic.user_id;
+      post.topic?.topic_op_admin_status?.can_fold_posts &&
+      currentUser.id === post.topic.user_id;
 
-    if (!canFold) {
+    return canFold;
+  }
+
+  function makeButton(attrs) {
+    if (!shoudRenderPostFoldingButton(attrs)) {
       return;
     }
 
@@ -97,12 +99,26 @@ export default apiInitializer("1.16.0", (api) => {
     };
   }
 
-  api.addPostMenuButton("coffee", (attrs) => {
-    if (attrs.canManage || attrs.canWiki || attrs.canEditStaffNotes) {
-      return;
+  api.registerValueTransformer(
+    "post-menu-buttons",
+    ({
+      value: dag,
+      context: {
+        post,
+        lastHiddenButtonKey, // key of the last hidden button
+      },
+    }) => {
+      if (post.canManage || post.canWiki || post.canEditStaffNotes) {
+        return;
+      }
+      if (!shoudRenderPostFoldingButton(post)) {
+        return;
+      }
+      dag.add("solved", PostMenuFoldingButton, {
+        before: lastHiddenButtonKey,
+      });
     }
-    return makeButton(attrs);
-  });
+  );
 
   api.addPostAdminMenuButton((attrs) => {
     if (attrs.canManage || attrs.canWiki || attrs.canEditStaffNotes) {

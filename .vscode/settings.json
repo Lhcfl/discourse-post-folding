@@ -1,0 +1,6 @@
+{
+  "editor.formatOnSave": true,
+  "[glimmer-js]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
