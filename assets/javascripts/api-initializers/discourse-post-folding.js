@@ -114,7 +114,7 @@ export default apiInitializer("1.16.0", (api) => {
       if (!shoudRenderPostFoldingButton(post)) {
         return;
       }
-      dag.add("solved", PostMenuFoldingButton, {
+      dag.add("post-folding", PostMenuFoldingButton, {
         before: lastHiddenButtonKey,
       });
     }
