@@ -34,7 +34,7 @@ export default apiInitializer("1.16.0", (api) => {
   //     }
   // );
 
-  api.includePostAttributes("post_folding_status");
+  api.addTrackedPostProperties("post_folding_status");
 
   api.addPostClassesCallback((attrs) => {
     if (attrs.post_folding_status == null) {
