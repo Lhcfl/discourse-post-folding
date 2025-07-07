@@ -2,6 +2,7 @@ import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { apiInitializer } from "discourse/lib/api";
 import { bind } from "discourse/lib/decorators";
+import PostFoldingStatus from "../discourse/components/post-folding-status";
 import PostMenuFoldingButton from "../discourse/components/post-menu-folding-button";
 
 export default apiInitializer("1.16.0", (api) => {
@@ -114,6 +115,8 @@ export default apiInitializer("1.16.0", (api) => {
       });
     }
   );
+
+  api.renderAfterWrapperOutlet("post-menu", PostFoldingStatus);
 
   api.addPostAdminMenuButton((attrs) => {
     if (attrs.canManage || attrs.canWiki || attrs.canEditStaffNotes) {

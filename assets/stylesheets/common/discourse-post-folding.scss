@@ -1,3 +1,15 @@
 .topic-post.folded {
   opacity: 80%;
 }
+
+.post-folding-status-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--primary-medium);
+  padding-right: 1em;
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
