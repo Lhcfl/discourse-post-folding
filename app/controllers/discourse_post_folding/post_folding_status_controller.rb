@@ -46,10 +46,8 @@ module ::DiscoursePostFolding
 
       post_folding_status = PostFoldingStatusSerializer.new(ps).as_json(root: false)
 
-      ::MessageBus.publish(
-        "/discourse-post-folding/topic/#{post.topic_id}",
-        { post_id: post.id, post_folding_status: },
-      )
+      ::MessageBus.publish "/discourse-post-folding/topic/#{post.topic_id}",
+                           { post_id: post.id, post_folding_status: }
 
       render json: { success: true, post_id: post.id, post_folding_status: }
     end
@@ -64,6 +62,9 @@ module ::DiscoursePostFolding
       end
 
       ps = PostFoldingStatus.find_by(post_id: post.id)
+
+      ::MessageBus.publish "/discourse-post-folding/topic/#{post.topic_id}",
+                           { post_id: post.id, post_folding_status: nil }
 
       if ps.present?
         ps.destroy!

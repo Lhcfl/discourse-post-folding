@@ -1,38 +1,42 @@
 import { ajax } from "discourse/lib/ajax";
 import { popupAjaxError } from "discourse/lib/ajax-error";
 import { apiInitializer } from "discourse/lib/api";
+import { bind } from "discourse/lib/decorators";
 import PostMenuFoldingButton from "../discourse/components/post-menu-folding-button";
 
 export default apiInitializer("1.16.0", (api) => {
-  // api.modifyClass(
-  //   "controller:topic",
-  //   (Superclass) =>
-  //     class extends Superclass {
-  //       subscribe() {
-  //         super.subscribe(...arguments);
-  //         console.log(
-  //           "subscribe",
-  //           `/discourse-post-folding/topic/${this.model.id}`
-  //         );
-  //         this.messageBus.subscribe(
-  //           `/discourse-post-folding/topic/${this.model.id}`,
-  //           this._onPostFoldingMessage
-  //         );
-  //       }
-  //       unsubscribe() {
-  //         this.messageBus.unsubscribe(
-  //           "/discourse-post-folding/topic/*",
-  //           this._onPostFoldingMessage
-  //         );
-  //         super.unsubscribe(...arguments);
-  //       }
-  //       _onPostFoldingMessage(msg) {
-  //         console.log(msg);
-  //         const post = this.get("model.postStream").findLoadedPost(msg.post_id);
-  //         post?.set("post_folding_status", msg.post_folding_status);
-  //       }
-  //     }
-  // );
+  api.modifyClass(
+    "controller:topic",
+    (Superclass) =>
+      class extends Superclass {
+        subscribe() {
+          super.subscribe(...arguments);
+          this.messageBus.subscribe(
+            `/discourse-post-folding/topic/${this.model.id}`,
+            this._onPostFoldingMessage
+          );
+        }
+
+        unsubscribe() {
+          this.messageBus.unsubscribe(
+            "/discourse-post-folding/topic/*",
+            this._onPostFoldingMessage
+          );
+          super.unsubscribe(...arguments);
+        }
+
+        @bind
+        _onPostFoldingMessage(msg) {
+          const post = this.get("model.postStream").findLoadedPost(msg.post_id);
+          post?.set("post_folding_status", msg.post_folding_status);
+          // TODO (glimmer-post-stream) the Glimmer Post Stream does not listen to this event
+          this.appEvents.trigger("post-stream:refresh", {
+            id: msg.post_id,
+            post_folding_status: msg.post_folding_status,
+          });
+        }
+      }
+  );
 
   api.addTrackedPostProperties("post_folding_status");
 
@@ -79,16 +83,7 @@ export default apiInitializer("1.16.0", (api) => {
         ajax(`/discourse-post-folding/status/${post.id}`, {
           type: folded ? "DELETE" : "PUT",
           data: {},
-        })
-          .then((res) => {
-            post.set("post_folding_status", res.post_folding_status);
-            api.container
-              .lookup("service:app-events")
-              .trigger("post-stream:refresh", {
-                id: post.id,
-              });
-          })
-          .catch(popupAjaxError);
+        }).catch(popupAjaxError);
       },
       icon: folded ? "expand" : "compress",
       className: "discourse_post_folding-fold-btn",
